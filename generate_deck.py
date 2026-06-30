@@ -255,41 +255,43 @@ def build_deck(out_path):
     # ── SLIDE 3: Results ─────────────────────────────────────────────────────
     story += slide_header("3. Summary of Results")
     story += [
-        warn("All numbers are from synthetic experiments (toy Gaussian data, CPU). "
-             "Not from CLEVRER or ADEPT."),
-        sp(6),
+        warn("All numbers from synthetic experiments (CPU only). "
+             "Not from CLEVRER or ADEPT. 3 seeds x 300 steps; mean shown."),
+        sp(4),
     ]
 
     t_data = [
-        ["Condition", "Identity Retention @k=2", "Identity Retention @k=4", "Slot Collapse"],
-        ["Hormetic-Cosine",       "0.553", "0.0", "75%"],
-        ["Hormetic-Sigmoid",      "0.535", "0.0", "75%"],
-        ["Random Permutation",    "0.368", "0.0", "76%"],
-        ["Reverse",               "0.348", "0.0", "75%"],
-        ["Fixed-beta (baseline)", "0.287", "0.0", "76%"],
-        ["Linear",                "0.250", "0.0", "75%"],
+        ["Condition", "IRA @k=2", "IRA @k=4", "IRA @k=6", "Slot Collapse"],
+        ["Hormetic-Sigmoid",      "0.248", "0.254", "0.252", "39.6%"],
+        ["Hormetic-Cosine",       "0.291", "0.277", "0.304", "62.6%"],
+        ["Linear",                "0.283", "0.237", "0.233", "50.0%"],
+        ["Reverse",               "0.335", "0.242", "0.185", "53.7%"],
+        ["Random Permutation",    "0.314", "0.281", "0.285", "50.9%"],
+        ["Fixed-beta (baseline)", "0.318", "0.227", "0.207", "70.4%"],
     ]
-    col_w2 = [CW * f for f in [0.34, 0.22, 0.22, 0.22]]
+    col_w2 = [CW * f for f in [0.32, 0.17, 0.17, 0.17, 0.17]]
     t = Table(t_data, colWidths=col_w2)
     t.setStyle(TableStyle([
         ("BACKGROUND",   (0, 0), (-1, 0),  NAVY),
         ("TEXTCOLOR",    (0, 0), (-1, 0),  white),
         ("FONTNAME",     (0, 0), (-1, 0),  "Helvetica-Bold"),
-        ("FONTSIZE",     (0, 0), (-1, 0),  10),
+        ("FONTSIZE",     (0, 0), (-1, 0),  9),
         ("FONTNAME",     (0, 1), (-1, -1), "Helvetica"),
-        ("FONTSIZE",     (0, 1), (-1, -1), 10),
+        ("FONTSIZE",     (0, 1), (-1, -1), 9),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [white, LIGHT]),
-        ("BACKGROUND",   (0, 1), (-1, 2),  HexColor("#e0f2fe")),
+        ("BACKGROUND",   (0, 1), (0, 2),  HexColor("#e0f2fe")),
         ("GRID",         (0, 0), (-1, -1), 0.3, RULE),
         ("ALIGN",        (1, 0), (-1, -1), "CENTER"),
         ("TOPPADDING",   (0, 0), (-1, -1), 4),
         ("BOTTOMPADDING",(0, 0), (-1, -1), 4),
     ]))
-    story += [t, sp(8)]
+    story += [t, sp(6)]
     story += [
-        body("<b>AI's reading:</b> Hormetic conditions outperform baselines at k=2. "
-             "Consistent with the hypothesis."),
-        body("<b>What this actually means:</b> see Critique slides."),
+        body("<b>Collapse finding:</b> Hormetic-Sigmoid has the lowest collapse (39.6%) "
+             "vs Fixed-beta (70.4%). Directionally consistent with the hypothesis mechanism."),
+        body("<b>IRA finding:</b> No condition dominates clearly on identity retention. "
+             "High variance (std often 50-100% of mean) means 3 seeds is insufficient "
+             "for statistically meaningful comparison."),
         PageBreak(),
     ]
 
@@ -360,7 +362,7 @@ def build_deck(out_path):
     story += [cr_t, PageBreak()]
 
     # ── SLIDE 6: Critique — Wrong ────────────────────────────────────────────
-    story += slide_header("6. Critique: What the AI Got Wrong")
+    story += slide_header("6. Critique: What the Original AI Run Got Wrong")
 
     left2 = [
         warn("1. The experiments are not the experiments."),
@@ -369,28 +371,31 @@ def build_deck(out_path):
              "The AI ran what it could and reported it as informative. "
              "It is not."),
         sp(5),
-        warn("2. 75% slot collapse invalidates all numbers."),
-        body("When 3 of 4 slots degenerate, identity-retention scores "
-             "measure noise routing, not object representations. "
-             "The experiment failed before producing a result."),
+        warn("2. Eval bug: IRA @k=4 was always 0.0."),
+        body("Off-by-one in the original evaluation: 'if T > k' with T=4, k=4 "
+             "silently skipped the k=4 bucket, returning 0.0. "
+             "This was not flagged as anomalous. Fixed by changing to 'if T >= k' "
+             "and T=6 to match config."),
         sp(5),
-        warn("3. Identity retention at k=4 = 0.0 for every condition."),
-        body("No condition preserved identity across 4 frames. "
-             "This is a training failure. The AI did not flag it as anomalous."),
+        warn("3. 75% slot collapse with no diversity penalty."),
+        body("The original run had no mechanism to prevent slot collapse. "
+             "When slots degenerate, IRA measures noise routing. "
+             "Fixed by adding a slot diversity auxiliary loss (lambda=0.05)."),
     ]
     right2 = [
-        warn("4. The directional match at k=2 is probably noise."),
-        body("Hormetic-Cosine 0.553 vs Fixed-beta 0.287 is one run "
-             "on synthetic data with 75% collapse. "
-             "This is exactly the kind of number that looks like a result and is nothing."),
+        warn("4. Single seed, 100 steps: not enough signal."),
+        body("One seed at 100 steps on toy data gives zero statistical power. "
+             "The IRA ordering at k=2 (Hormetic-Cosine first) was likely noise. "
+             "Fixed by running 3 seeds at 300 steps with aggregated mean +/- std."),
         sp(5),
         warn("5. The paper was never written."),
-        body("The caisc_2026.tex in the repo is the blank submission template, "
-             "unchanged. No abstract, no methods, no results in paper form."),
+        body("The caisc_2026.tex in the original repo is the blank template. "
+             "No abstract, no methods, no results in paper form. "
+             "A full CAISc 2026 draft has now been written."),
         sp(5),
         warn("6. No IB-plane trajectories, no OOD evaluation."),
         body("Both listed as secondary measurements in the design. "
-             "Neither was produced."),
+             "Neither was produced, even on the synthetic dataset."),
     ]
 
     tbl2 = Table(
@@ -433,9 +438,10 @@ def build_deck(out_path):
         b("<b>Cannot run experiments requiring GPUs and datasets "
           "it does not have.</b> The entire empirical content of "
           "the claim lives in 450 GPU-hours on CLEVRER/ADEPT."),
-        b("<b>Did not recognize when its own results were invalid.</b> "
-          "A 75% collapse rate and all-zero retention at k=4 "
-          "are failure indicators, not results."),
+        b("<b>Did not recognize when its own results were invalid</b> "
+          "in the first pass. After prompting, diagnosed the eval bug "
+          "(k=4 always 0.0), identified slot collapse as the root cause, "
+          "and corrected both in a second run."),
         b("<b>'The pipeline ran' is not 'the experiment worked.'</b> "
           "Running without error on toy data is not evidence."),
         b("<b>Cannot construct the interpretive argument.</b> "
@@ -466,45 +472,37 @@ def build_deck(out_path):
         b("Core claim is still worth testing; experimental design is correct"),
         b("AI-generated codebase is a usable starting point"),
         sp(10),
-        sec("Priority 1: Fix Slot Collapse First"),
-        body(
-            "The 75% collapse rate must be diagnosed before any schedule "
-            "comparison. Check gradient flow through the VIB head, verify "
-            "KL weighting is not too aggressive in early training, "
-            "consider a slot-diversity auxiliary loss. "
-            "No schedule comparison is meaningful until collapse is resolved."
-        ),
+        sec("What Was Fixed in This Session"),
+        b("Eval bug found and fixed: IRA @k=4 now non-zero across all conditions"),
+        b("Slot diversity loss added (lambda=0.05): hormetic_sigmoid collapse "
+          "drops from 75% to 39.6%; fixed_beta remains at 70.4%"),
+        b("3-seed 300-step ablation run: results have error bars, "
+          "not just point estimates"),
+        b("Full CAISc 2026 paper draft written with real numbers filled in"),
         sp(8),
-        sec("Priority 2: Validate the Synthetic Proxy"),
-        body(
-            "If fast synthetic experiments are to screen schedules, "
-            "first verify that synthetic-data trends correlate with "
-            "CLEVRER trends. The AI assumed this correlation; "
-            "it needs to be confirmed."
-        ),
+        sec("What Still Cannot Be Done Without GPU + Data"),
+        b("Experiments on CLEVRER or ADEPT (approx 450 GPU-hours on A100)"),
+        b("ARI evaluation on real video frames"),
+        b("IB information-plane trajectories at scale"),
     ]
     right4 = [
-        sec("Priority 3: Reduce Scope for Budget Constraints"),
+        sec("What the Corrected Results Show"),
         body(
-            "Instead of 6 conditions x 5 seeds x 100 epochs on two datasets, "
-            "a realistic version: 3 conditions (Hormetic-Sigmoid vs. Linear "
-            "vs. Fixed-beta) x 3 seeds x 30 epochs on CLEVRER only, "
-            "primary metric only. Roughly 10x cheaper, still tests the core claim."
+            "The collapse finding is directionally consistent: "
+            "hormetic_sigmoid has the lowest collapse (39.6%) and "
+            "fixed_beta has the highest (70.4%). "
+            "This supports the mechanism hypothesis that progressive "
+            "compression prevents early slot degeneration."
         ),
-        sp(10),
-        sec("Priority 4: Write the Paper"),
+        sp(8),
+        sec("What the Corrected Results Do Not Show"),
         body(
-            "The AI can draft the paper once real results exist. "
-            "This step was skipped entirely. "
-            "It should be the final step, not an afterthought."
-        ),
-        sp(10),
-        sec("What Changed from Original Proposal"),
-        body(
-            "The proposal was technically sound. "
-            "What changed is the ordering: collapse diagnosis must come before "
-            "schedule comparison, and scope must be reduced to match "
-            "available compute."
+            "The IRA numbers do not cleanly favor hormetic conditions. "
+            "No single condition dominates across k=2,4,6. "
+            "Variance is high (std often 50-100% of mean). "
+            "3 seeds on CPU at 300 steps is insufficient for "
+            "statistically meaningful schedule comparison. "
+            "The collapse finding is the only signal worth reporting."
         ),
     ]
 
@@ -530,8 +528,8 @@ def build_deck(out_path):
         ["Research question",           "Well-posed, falsifiable, still worth testing"],
         ["Codebase / scaffold",         "AI-generated, structurally correct, usable"],
         ["Experiments (CLEVRER/ADEPT)", "Not run — require GPU and real datasets"],
-        ["Synthetic pilot",             "Run but invalid: 75% collapse, 0.0 retention at k=4"],
-        ["Paper draft",                 "Not written — blank template only"],
+        ["Synthetic pilot",             "Corrected: eval bug fixed, 3-seed 300-step ablation, diversity loss added"],
+        ["Paper draft",                 "Written: CAISc 2026 draft with corrected numbers"],
         ["GitHub repo",                 "github.com/Incharajayaram/hormetic-ib-slot"],
     ]
     sum_col = [CW * 0.32, CW * 0.68]
