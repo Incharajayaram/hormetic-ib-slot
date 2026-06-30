@@ -1,0 +1,8 @@
+schedule:
+  name: "hormetic_cosine"
+  beta_min: 0.0
+  beta_max: 1.0
+
+experiment:
+  name: "hormetic_cosine"
+  description: "Hormetic schedule with cosine ramp: beta(t) = beta_max * 0.5 * (1 - cos(pi*t))"

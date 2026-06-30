@@ -1,0 +1,8 @@
+schedule:
+  name: "reverse"
+  beta_min: 0.0
+  beta_max: 1.0
+
+experiment:
+  name: "reverse"
+  description: "Reverse schedule: starts at beta_max, linearly decays to beta_min. Anti-hormetic control."

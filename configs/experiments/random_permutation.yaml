@@ -1,0 +1,9 @@
+schedule:
+  name: "random_permutation"
+  beta_min: 0.0
+  beta_max: 1.0
+  random_seed: 42
+
+experiment:
+  name: "random_permutation"
+  description: "Random permutation of linear schedule values. Controls for whether order of beta values matters."

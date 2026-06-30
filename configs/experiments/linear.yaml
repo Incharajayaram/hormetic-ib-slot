@@ -1,0 +1,8 @@
+schedule:
+  name: "linear"
+  beta_min: 0.0
+  beta_max: 1.0
+
+experiment:
+  name: "linear"
+  description: "Linear beta ramp: beta(t) = beta_max * t. Control for monotone but non-hormetic schedule shape."

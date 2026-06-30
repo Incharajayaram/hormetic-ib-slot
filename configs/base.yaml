@@ -1,0 +1,48 @@
+# Base configuration for Hormetic IB Slot experiments
+# Override with experiment-specific configs in configs/experiments/
+
+model:
+  num_slots: 7
+  slot_dim: 64
+  latent_dim: 32
+  hidden_dim: 128
+  num_iters: 3
+  resolution: [64, 64]
+  backbone: "small"  # "small" or "resnet"
+
+training:
+  num_epochs: 100
+  batch_size: 32
+  lr: 4.0e-4
+  weight_decay: 0.0
+  clip_grad_norm: 1.0
+  warmup_steps: 2500
+  save_interval: 10
+  log_interval: 100
+  lambda_identity: 0.1   # weight of slot identity contrastive loss
+  num_seeds: 5
+
+data:
+  num_frames: 6          # context frames per clip
+  frame_stride: 2
+  num_workers: 4
+  max_videos: null       # null = use all
+
+schedule:
+  beta_min: 0.0
+  beta_max: 1.0
+  name: "hormetic_sigmoid"   # overridden per experiment
+  # hormetic_sigmoid params:
+  sigmoid_steepness: 10.0
+  sigmoid_midpoint: 0.5
+  # random_permutation params:
+  random_seed: 42
+
+evaluation:
+  occlusion_durations: [4, 8, 16, 32]  # frames
+  batch_size: 16
+
+paths:
+  clevrer_root: "/data/clevrer"
+  adept_root: "/data/adept"
+  results_dir: "./results"

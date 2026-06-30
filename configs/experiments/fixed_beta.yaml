@@ -1,0 +1,13 @@
+schedule:
+  name: "fixed_beta"
+  beta_min: 1.0
+  beta_max: 1.0
+
+experiment:
+  name: "fixed_beta"
+  description: "Fixed beta = 1.0 throughout training. Matched final-beta control."
+
+# Additional fixed-beta variants for sensitivity analysis:
+# fixed_beta_low: beta = 0.1
+# fixed_beta_mid: beta = 0.5
+# Run these by overriding beta_min=beta_max=<value> from CLI

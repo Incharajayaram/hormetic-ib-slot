@@ -1,0 +1,10 @@
+schedule:
+  name: "hormetic_sigmoid"
+  beta_min: 0.0
+  beta_max: 1.0
+  sigmoid_steepness: 10.0
+  sigmoid_midpoint: 0.5
+
+experiment:
+  name: "hormetic_sigmoid"
+  description: "Primary hormetic schedule: sigmoid ramp of beta during training"
